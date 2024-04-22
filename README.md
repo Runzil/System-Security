@@ -1,2 +1,2 @@
 # System-Security
-A concentration of projects implemented under the Security of Systems and Services course in TUC
+ A concentration of projects implemented for Security of Systems and Services 
