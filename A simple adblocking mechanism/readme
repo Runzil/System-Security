@@ -1,0 +1,34 @@
+2019030105 Damianakis Stavros
+2019030035 Zafeirakis Konstantinos
+
+gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.2)
+
+adblock.sh is a script that restricts incoming and outgoing traffic between an ip and the host the ip can be specified either as is or through a domain it also has the ability to save and load these rules in files more specifically the options are:
+
+-domains: reads the domains from the domainNames.txt and restrics access to their domains
+-ips: reads the ips from the domainNames.txt and restrics access to them
+-reset: reset the rules clear all restrictions
+-help: prints a help message 
+-list: list all the rules
+-save: save the rules to files (one file for IPV4 one for IPV6)
+-load: save the rules from files (one file from IPV4 one from IPV6)
+
+
+How to run:
+
+sudo su 
+./adblock.sh -help
+./adblock.sh -domains
+./adblock.sh -ips
+./adblock.sh -reset
+./adblock.sh -list
+./adblock.sh -save
+./adblock.sh -load
+
+
+Q: After configuring the adblock rules, test your script by visiting your favorite
+websites without any other adblocking mechanism (e.g., adblock browser
+extensions). Can you see ads? Do they load? Some ads persist, why?
+
+A: Ads in websites are not always blocked this is caused by load balancing which is a method that distributes the traffic to different IPs according to demand. Therefore the tool might identified the IP of website but the IP may change in time and the traffic will not be blocked.
+

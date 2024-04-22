@@ -1,0 +1,14 @@
+# rule 1: Report any icmp connection attempt in test_pcap_5mins.pcap
+alert icmp any any -> any any (msg:"ICMP Echo Request"; itype:8; sid:1000001;)
+
+# rule 2: Find all packets which contain “hello” string in test_pcap_5mins.pcap
+alert any any -> any any (content:"hello"; msg:"Packet contains 'hello'"; sid:1000002;)
+
+# rule 3: Report all traffic between non root ports (port number > 1024)
+alert ip any any -> any 1025:65535 (msg:"Detect traffic between non-root ports"; sid:1000003;)
+
+# rule 4: Create a rule that will detect ssh brute force attacks in sshguess.pcap file
+alert tcp any any -> any 22 (msg:"SSH Brute Force Attack"; flow:to_server; detection_filter:track by_src, count 10, seconds 600; sid:1000004;)
+
+# rule 5: Report any clear indicator of malicious traffic in test_pcap_5mins.pcap
+# check README

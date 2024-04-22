@@ -1,0 +1,481 @@
+2019030105 Damianakis Stavros
+2019030035 Zafeirakis Konstantinos
+
+gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.2)
+Snort++ 3.1.76.0
+
+How to run with simple rules: 
+sudo snort -R simple.rules -A alert_fast -r test_pcap_5mins.pcap
+sudo snort -R simple.rules -A alert_fast -r sshguess.pcap
+
+The outputs are at the end of the file.
+
+
+Explanation of the "simple.rules" file:
+
+Rule 1:
+
+This rule generates an alert for the ICMP protocol and matches traffic from any source IP and any source port to any destination IP and any destination port. The alert message is "ICMP Echo Request" and the "itype:8" matches ICMP Echo Request packets. Lastly, sid is the unique identifier for rule 1. Note that in the .pcap file, there are three ICMP packets: Echo Request, time-exceeded, and Echo Response. The Snort rule focuses only on Echo Request packets since these packets are the connection attempts. The rule detects 7 requests packets same as wireshark.
+
+Rule 2:
+
+This rule generates an alert for any packet and matches traffic from any source IP and any source port to any destination IP and any destination port. The rule matches packets containing the string "hello" and the alert message is "Packet contains 'hello'". Lastly, sid is the unique identifier for rule 2. This rule detects 2 packets containing the word "hello", wireshark also detects 2.
+
+Rule 3:
+
+This rule triggers an alert for any IP packet, regardless of the protocol, and matches traffic from any source IP and any source port to any destination IP with a destination port greater than 1024. The alert message is "Traffic between non-root ports". Lastly, sid is the unique identifier for rule 3. Note that while wireshark identifies 9267 packets that satisfy this condition our snort rule identifies 9245 (it excludes the 22 time-exceeded icmp packets)
+
+Rule 4:
+
+This rule generates an alert for the TCP protocol and matches traffic from any source IP and any source port to any destination IP on port 22 (the standard port for SSH). The alert message is "SSH Brute Force Attack" and "flow:to_server;" specifies that the flow is from the client to the server. The specified detection filter is used to track 10 connection attempts from the same source IP within 600 seconds. Lastly, sid is the unique identifier for rule 4.
+
+Rule 5:
+
+First, we downloaded the snort3-community.rules file from the following link: https://www.snort.org/downloads/#rule-downloads
+Our version of snort had snort.lua configuration file instead of snort.conf. We changed the ips block of the snort.lua file in the lua folder as such, to add the community rules:
+
+ips =
+{
+    -- use this to enable decoder and inspector alerts
+    --enable_builtin_rules = true,
+
+    -- use include for rules files; be sure to set your path
+    -- note that rules files can include other rules files
+    -- (see also related path vars at the top of snort_defaults.lua)
+
+    rules = [[
+        include /home/user/Desktop/snort3/snort3-community.rules
+    ]],
+
+    variables = default_variables
+}
+
+Then, we run snort with the associated snort.lua file by executing the following command:
+
+snort -c snort.lua -r test_pcap_5mins.pcap -A alert_fast
+
+In the command above we specify the configuration file, the packet capture file and the output mode for alerts.
+
+We identified 102 alerts in total with 8 different classes of alerts, based on the output. All of the following classes are regarded as malicious traffic since they are discover attempts, misc activities, privacy violations and information leak attempts.
+
+INDICATOR-SCAN UPnP service discover attempt Classification: Detection of a Network Scan
+PROTOCOL-ICMP Time-To-Live Exceeded in Transit Classification: Misc activity
+POLICY-SOCIAL Microsoft MSN user search Classification: Potential Corporate Privacy Violation
+POLICY-SOCIAL Microsoft MSN message Classification: Potential Corporate Privacy Violation
+PROTOCOL-SNMP public access udp Classification: Attempted Information Leak
+PROTOCOL-SNMP request udp Classification: Attempted Information Leak
+PROTOCOL-ICMP L3retriever Ping Classification: Attempted Information Leak
+PROTOCOL-ICMP PING Classification: Misc activity
+PROTOCOL-ICMP Echo Reply Classification: Misc activity
+
+
+
+Alert Output:
+
+01/25-20:52:39.603835 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 192.168.3.131:57757 -> 239.255.255.250:1900
+01/25-20:52:39.604345 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 192.168.3.131:57757 -> 239.255.255.250:1900
+01/25-20:52:42.603621 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 192.168.3.131:57757 -> 239.255.255.250:1900
+01/25-20:52:42.604427 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 192.168.3.131:57757 -> 239.255.255.250:1900
+01/25-20:52:45.604089 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 192.168.3.131:57757 -> 239.255.255.250:1900
+01/25-20:52:45.604949 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 192.168.3.131:57757 -> 239.255.255.250:1900
+01/25-20:54:04.337730 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:54052 -> 239.255.255.250:1900
+01/25-20:54:04.337804 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:54052 -> 239.255.255.250:1900
+01/25-20:54:19.160746 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:54:19.160903 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:54:19.161403 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:54:19.161469 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:54:19.749351 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:54:19.749385 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:54:19.749652 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:54:19.749731 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:54:20.294381 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:54:20.294427 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:54:20.296806 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:54:20.296898 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:54:20.730127 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:54:20.730191 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:54:20.733007 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:54:20.733104 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:54:21.186147 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:54:21.186212 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:54:21.187322 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:54:21.187397 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:54:37.330025 [**] [1:1990:7] "POLICY-SOCIAL Microsoft MSN user search" [**] [Classification: Potential Corporate Privacy Violation] [Priority: 1] {TCP} 10.0.2.15:2550 -> 64.4.35.57:1863
+01/25-20:54:37.330648 [**] [1:1990:7] "POLICY-SOCIAL Microsoft MSN user search" [**] [Classification: Potential Corporate Privacy Violation] [Priority: 1] {TCP} 10.0.2.15:2550 -> 64.4.35.57:1863
+01/25-20:54:37.862178 [**] [1:540:17] "POLICY-SOCIAL Microsoft MSN message" [**] [Classification: Potential Corporate Privacy Violation] [Priority: 1] {TCP} 10.0.2.15:2550 -> 64.4.35.57:1863
+01/25-20:54:39.794361 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:61993 -> 239.255.255.250:1900
+01/25-20:54:39.794436 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:61993 -> 239.255.255.250:1900
+01/25-20:54:59.918512 [**] [1:540:17] "POLICY-SOCIAL Microsoft MSN message" [**] [Classification: Potential Corporate Privacy Violation] [Priority: 1] {TCP} 10.0.2.15:2550 -> 64.4.35.57:1863
+01/25-20:55:19.669288 [**] [1:540:17] "POLICY-SOCIAL Microsoft MSN message" [**] [Classification: Potential Corporate Privacy Violation] [Priority: 1] {TCP} 64.4.35.57:1863 -> 10.0.2.15:2550
+01/25-20:55:34.093311 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:60061 -> 239.255.255.250:1900
+01/25-20:55:34.094994 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:60061 -> 239.255.255.250:1900
+01/25-20:55:37.091736 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:60061 -> 239.255.255.250:1900
+01/25-20:55:37.092428 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:60061 -> 239.255.255.250:1900
+01/25-20:55:40.104246 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:60061 -> 239.255.255.250:1900
+01/25-20:55:40.104967 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:60061 -> 239.255.255.250:1900
+01/25-20:55:44.511002 [**] [1:1411:21] "PROTOCOL-SNMP public access udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:55:44.511002 [**] [1:1417:18] "PROTOCOL-SNMP request udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:55:44.711002 [**] [1:1411:21] "PROTOCOL-SNMP public access udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:55:44.711002 [**] [1:1417:18] "PROTOCOL-SNMP request udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:56:09.160746 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:56:09.160903 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:56:09.161403 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:56:09.161469 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:56:09.749351 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:56:09.749385 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:56:09.749652 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:56:09.749731 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:56:10.294381 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:56:10.294427 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:56:10.296806 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:56:10.296898 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:56:10.730127 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:56:10.730191 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:56:10.733007 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:56:10.733104 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:56:11.186147 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:56:11.186212 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 10.0.2.15:48575 -> 10.0.2.2:1900
+01/25-20:56:11.187322 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:56:11.187397 [**] [1:449:9] "PROTOCOL-ICMP Time-To-Live Exceeded in Transit" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.0.2.2 -> 10.0.2.15
+01/25-20:56:14.511260 [**] [1:1411:21] "PROTOCOL-SNMP public access udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:56:14.511260 [**] [1:1417:18] "PROTOCOL-SNMP request udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:56:14.711260 [**] [1:1411:21] "PROTOCOL-SNMP public access udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:56:14.711260 [**] [1:1417:18] "PROTOCOL-SNMP request udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:56:44.511549 [**] [1:1411:21] "PROTOCOL-SNMP public access udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:56:44.511549 [**] [1:1417:18] "PROTOCOL-SNMP request udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:56:44.711549 [**] [1:1411:21] "PROTOCOL-SNMP public access udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:56:44.711549 [**] [1:1417:18] "PROTOCOL-SNMP request udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:56:45.434639 [**] [1:466:9] "PROTOCOL-ICMP L3retriever Ping" [**] [Classification: Attempted Information Leak] [Priority: 2] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:45.434639 [**] [1:384:8] "PROTOCOL-ICMP PING" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:45.549380 [**] [1:408:8] "PROTOCOL-ICMP Echo Reply" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 67.215.65.132 -> 172.16.255.1
+01/25-20:56:45.659285 [**] [1:466:9] "PROTOCOL-ICMP L3retriever Ping" [**] [Classification: Attempted Information Leak] [Priority: 2] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:45.659285 [**] [1:384:8] "PROTOCOL-ICMP PING" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:47.552706 [**] [1:466:9] "PROTOCOL-ICMP L3retriever Ping" [**] [Classification: Attempted Information Leak] [Priority: 2] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:47.552706 [**] [1:384:8] "PROTOCOL-ICMP PING" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:47.667822 [**] [1:408:8] "PROTOCOL-ICMP Echo Reply" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 67.215.65.132 -> 172.16.255.1
+01/25-20:56:47.823394 [**] [1:466:9] "PROTOCOL-ICMP L3retriever Ping" [**] [Classification: Attempted Information Leak] [Priority: 2] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:47.823394 [**] [1:384:8] "PROTOCOL-ICMP PING" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:47.937788 [**] [1:408:8] "PROTOCOL-ICMP Echo Reply" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 67.215.65.132 -> 172.16.255.1
+01/25-20:56:48.052845 [**] [1:466:9] "PROTOCOL-ICMP L3retriever Ping" [**] [Classification: Attempted Information Leak] [Priority: 2] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:48.052845 [**] [1:384:8] "PROTOCOL-ICMP PING" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:50.048943 [**] [1:466:9] "PROTOCOL-ICMP L3retriever Ping" [**] [Classification: Attempted Information Leak] [Priority: 2] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:50.048943 [**] [1:384:8] "PROTOCOL-ICMP PING" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:50.164050 [**] [1:408:8] "PROTOCOL-ICMP Echo Reply" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 67.215.65.132 -> 172.16.255.1
+01/25-20:56:50.273617 [**] [1:466:9] "PROTOCOL-ICMP L3retriever Ping" [**] [Classification: Attempted Information Leak] [Priority: 2] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:50.273617 [**] [1:384:8] "PROTOCOL-ICMP PING" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 172.16.255.1 -> 67.215.65.132
+01/25-20:56:50.385275 [**] [1:408:8] "PROTOCOL-ICMP Echo Reply" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 67.215.65.132 -> 172.16.255.1
+01/25-20:57:11.252038 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:60061 -> 239.255.255.250:1900
+01/25-20:57:14.264978 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:60061 -> 239.255.255.250:1900
+01/25-20:57:14.511879 [**] [1:1411:21] "PROTOCOL-SNMP public access udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:57:14.511879 [**] [1:1417:18] "PROTOCOL-SNMP request udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:57:14.711879 [**] [1:1411:21] "PROTOCOL-SNMP public access udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:57:14.711879 [**] [1:1417:18] "PROTOCOL-SNMP request udp" [**] [Classification: Attempted Information Leak] [Priority: 2] {UDP} 192.168.3.131:52400 -> 192.168.3.99:161
+01/25-20:57:14.860003 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:63802 -> 239.255.255.250:1900
+01/25-20:57:14.860078 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:63802 -> 239.255.255.250:1900
+01/25-20:57:17.276008 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:60061 -> 239.255.255.250:1900
+01/25-20:57:20.326760 [**] [1:1917:16] "INDICATOR-SCAN UPnP service discover attempt" [**] [Classification: Detection of a Network Scan] [Priority: 3] {UDP} 172.16.255.1:60061 -> 239.255.255.250:1900
+
+
+Output of rules 1, 2 and 3 for the test_pcap_5mins.pcap file:
+
+--------------------------------------------------
+Packet Statistics
+--------------------------------------------------
+daq
+                    pcaps: 1
+                 analyzed: 14261
+              outstanding: 18446744073709537355
+          outstanding_max: 18446744073709537355
+                    allow: 14261
+                 rx_bytes: 9216531
+--------------------------------------------------
+codec
+                    total: 14261        (100.000%)
+                      arp: 18           (  0.126%)
+                      eth: 14261        (100.000%)
+                    icmp4: 34           (  0.238%)
+                 icmp4_ip: 22           (  0.154%)
+                     ipv4: 14243        ( 99.874%)
+                      tcp: 13708        ( 96.122%)
+                      udp: 501          (  3.513%)
+--------------------------------------------------
+Module Statistics
+--------------------------------------------------
+detection
+                 analyzed: 14261
+               hard_evals: 14243
+                   alerts: 14250
+             total_alerts: 14250
+                   logged: 14250
+--------------------------------------------------
+search_engine
+         qualified_events: 14243
+--------------------------------------------------
+Summary Statistics
+--------------------------------------------------
+timing
+                  runtime: 00:00:00
+                  seconds: 0.450167
+o")~   Snort exiting
+
+
+Output of rule 4 for the sshguess.pcap file:
+
+--------------------------------------------------
+Packet Statistics
+--------------------------------------------------
+daq
+                    pcaps: 1
+                 analyzed: 431
+              outstanding: 18446744073709551185
+          outstanding_max: 18446744073709551185
+                    allow: 431
+                 rx_bytes: 84001
+--------------------------------------------------
+codec
+                    total: 431          (100.000%)
+                 discards: 177          ( 41.067%)
+                      eth: 431          (100.000%)
+                     ipv4: 431          (100.000%)
+                      tcp: 431          (100.000%)
+--------------------------------------------------
+Module Statistics
+--------------------------------------------------
+detection
+                 analyzed: 431
+               hard_evals: 254
+                   alerts: 244
+             total_alerts: 244
+                   logged: 244
+--------------------------------------------------
+search_engine
+     non_qualified_events: 10
+         qualified_events: 244
+--------------------------------------------------
+tcp
+        bad_tcp4_checksum: 177
+--------------------------------------------------
+Summary Statistics
+--------------------------------------------------
+timing
+                  runtime: 00:00:00
+                  seconds: 0.031712
+o")~   Snort exiting
+
+
+Output of community.rules for the test_pcap_5mins.pcap file:
+
+--------------------------------------------------
+Packet Statistics
+--------------------------------------------------
+daq
+                    pcaps: 1
+                 analyzed: 14261
+              outstanding: 18446744073709537355
+          outstanding_max: 18446744073709537355
+                    allow: 11834
+                whitelist: 2427
+                 rx_bytes: 9216531
+           expected_flows: 1
+--------------------------------------------------
+codec
+                    total: 14261        (100.000%)
+                      arp: 18           (  0.126%)
+                      eth: 14261        (100.000%)
+                    icmp4: 34           (  0.238%)
+                 icmp4_ip: 22           (  0.154%)
+                     ipv4: 14243        ( 99.874%)
+                      tcp: 13708        ( 96.122%)
+                      udp: 501          (  3.513%)
+--------------------------------------------------
+Module Statistics
+--------------------------------------------------
+appid
+                  packets: 14243
+        processed_packets: 13958
+          ignored_packets: 285
+           total_sessions: 589
+       service_cache_adds: 222
+             bytes_in_use: 33744
+             items_in_use: 222
+--------------------------------------------------
+arp_spoof
+                  packets: 18
+--------------------------------------------------
+back_orifice
+                  packets: 467
+--------------------------------------------------
+binder
+              raw_packets: 303
+                new_flows: 562
+          service_changes: 364
+                 inspects: 865
+--------------------------------------------------
+dce_smb
+                 sessions: 2
+                  packets: 13
+            ignored_bytes: 874
+  max_concurrent_sessions: 2
+      total_smb1_sessions: 2
+--------------------------------------------------
+detection
+                 analyzed: 14261
+               hard_evals: 13230
+             raw_searches: 3308
+          cooked_searches: 4253
+             pkt_searches: 7561
+             pdu_searches: 4807
+            file_searches: 1427
+                   alerts: 102
+             total_alerts: 102
+                   logged: 102
+           cont_creations: 1
+               cont_flows: 1
+--------------------------------------------------
+dns
+                  packets: 68
+                 requests: 34
+                responses: 34
+--------------------------------------------------
+file_id
+              total_files: 506
+          total_file_data: 587205
+     max_concurrent_files: 1
+--------------------------------------------------
+http_inspect
+                    flows: 285
+                    scans: 6757
+              reassembles: 6757
+              inspections: 3263
+                 requests: 554
+                responses: 584
+             get_requests: 543
+            post_requests: 11
+           request_bodies: 11
+                  chunked: 58
+       uri_normalizations: 62
+                 uri_path: 2
+               uri_coding: 11
+  max_concurrent_sessions: 82
+              total_bytes: 7140666
+--------------------------------------------------
+normalizer
+        test_tcp_trim_win: 3
+--------------------------------------------------
+pcre
+               pcre_rules: 1084
+              pcre_native: 1084
+--------------------------------------------------
+port_scan
+                  packets: 14243
+                 trackers: 266
+--------------------------------------------------
+search_engine
+               max_queued: 31
+            total_flushed: 6345
+            total_inserts: 7780
+             total_unique: 6345
+     non_qualified_events: 18379
+         qualified_events: 1196
+           searched_bytes: 32337814
+--------------------------------------------------
+ssl
+                  packets: 435
+                  decoded: 435
+             client_hello: 69
+             server_hello: 69
+              certificate: 27
+              server_done: 128
+      client_key_exchange: 20
+            change_cipher: 101
+       client_application: 64
+       server_application: 116
+     unrecognized_records: 83
+     handshakes_completed: 42
+         sessions_ignored: 42
+  max_concurrent_sessions: 44
+--------------------------------------------------
+stream
+                    flows: 562
+             total_prunes: 61
+idle_prunes_proto_timeout: 61
+           expected_flows: 1
+       udp_timeout_prunes: 61
+--------------------------------------------------
+stream_icmp
+                 sessions: 3
+                      max: 3
+                  created: 3
+                 released: 3
+--------------------------------------------------
+stream_tcp
+                 sessions: 412
+                      max: 412
+                  created: 412
+                 released: 410
+                 timeouts: 3
+             instantiated: 409
+                   setups: 412
+                 restarts: 364
+          invalid_seq_num: 3
+             syn_trackers: 391
+            data_trackers: 19
+              segs_queued: 6002
+            segs_released: 6002
+                segs_used: 5969
+          rebuilt_packets: 3815
+            rebuilt_bytes: 6641866
+                     gaps: 2
+          client_cleanups: 35
+          server_cleanups: 31
+              established: 2
+                     syns: 407
+                 syn_acks: 367
+                   resets: 57
+                     fins: 527
+      inspector_fallbacks: 8
+        partial_fallbacks: 24
+                 max_segs: 50
+                max_bytes: 21900
+--------------------------------------------------
+stream_udp
+                 sessions: 147
+                      max: 147
+                  created: 173
+                 released: 173
+                 timeouts: 26
+              total_bytes: 54263
+--------------------------------------------------
+wizard
+                tcp_scans: 513
+                 tcp_hits: 364
+               tcp_misses: 2
+                udp_scans: 130
+               udp_misses: 130
+--------------------------------------------------
+Appid Statistics
+--------------------------------------------------
+detected apps and services
+              Application: Services   Clients    Users      Payloads   Misc       Referred  
+                  unknown: 510        295        0          329        0          0         
+--------------------------------------------------
+File Statistics
+--------------------------------------------------
+file stats
+                     Type TypeDn     TypeUp     BytesDn    BytesUp   
+                  SWF(52) 10         0          0          0         
+                  GIF(63) 64         0          0          0         
+                  PNG(69) 4          0          0          0         
+                 JPEG(70) 193        0          0          0         
+                 ICO(149) 1          0          0          0         
+                  VB(310) 8          0          0          0         
+                    Total 280        0          0          0         
+--------------------------------------------------
+Summary Statistics
+--------------------------------------------------
+timing
+                  runtime: 00:00:00
+                  seconds: 0.460132
+o")~   Snort exiting
+
+

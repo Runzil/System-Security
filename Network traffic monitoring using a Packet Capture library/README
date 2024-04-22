@@ -1,0 +1,25 @@
+2019030105 Damianakis Stavros
+2019030035 Zafeirakis Konstantinos
+
+gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.2)
+
+pcap_ex.c: Captures and analyzes network traffic using the pcap library has the following options:
+    -i Select the network interface name (e.g., eth0) it also saves the packets and statistics in log.txt when you exit (hit control c, interrupt signal)
+    -r Packet capture file name (e.g., test_pcap_5mins.pcap) it prints the packets and statistics in the terminal
+    -f Port filter in string format (e.g., port 8080)
+    -h Help message, which show the usage of each parameter
+
+packet_handler: a function that in main is called in pcap_loop meaning it is called for each packet. The function analyzes the packet checking if it is IPV4 or IPV6 and TCP or UDP for the TCP and UDP packets it calculates the number of bytes of the header and of the payload as well as the source and destination  ports and addresses and the memory location in which the payload was stored
+
+
+
+print_statistics , print_help: print functions that print either a help message or the statistics of the network flow which were calculated in the packet_handler function
+
+
+
+How to run:
+
+make 
+./pcap_ex -i eth0 
+./pcap_ex -r test_pcap_5mins.pcap 
+./pcap_ex -i eth0 -f “port 8080”

@@ -1,0 +1,134 @@
+to compile both programs run `make`
+
+# Diffie-Hellman Key Exchange Tool
+
+## Code Overview
+
+This C program, `dh_assign_1`, is designed to perform the Diffie-Hellman key exchange, which is a cryptographic method for establishing a shared secret between two parties, Alice and Bob. The shared secret can be used for secure communication or encryption. The code implements the specified functionality outlined in the assignment instructions.
+
+## Assignment Instructions Implementation
+
+The code follows the assignment instructions closely, as outlined below:
+
+1. **Command Line Arguments**: The program accepts command-line arguments to provide input and output options, following the prescribed format:
+
+    - `-o path`: Path to the output file where the results will be saved.
+    - `-p number`: Public prime number (p) for key exchange.
+    - `-g number`: Public primitive root (g) associated with the prime number.
+    - `-a number`: Private key of user A.
+    - `-b number`: Private key of user B.
+    - `-h`: Shows the help message with usage instructions.
+
+    The command line arguments are processed using the `getopt` library. The `print_usage` function is used to display the usage instructions in response to the `-h` option.
+
+2. **Key Exchange Calculation**: The code calculates the public keys A and B for Alice and Bob, respectively, using the specified prime number (p), primitive root (g), and their respective private keys (a and b). The calculations are done according to the Diffie-Hellman key exchange algorithm.
+
+3. **Shared Secret**: It computes the shared secret using the calculated public keys A and B and private keys a and b. The shared secret is the same as calculating `s = A^b mod p`. This calculation is performed using the `mpz_powm` function provided by the GMP (GNU Multiple Precision Arithmetic) library.
+
+4. **Output Format**: The program writes the calculated public keys for Alice and Bob, as well as the shared secret, to the output file in the format specified by the assignment instructions:
+
+
+## How To Run
+Specify -o -p -g -a -b and execute the programm all the options can be seen below:
+Options:
+    '-o path': Path to the output file
+    '-p number': Prime number
+    '-g number': Primitive root for the prime number
+    '-a number': Private key A
+    '-b number': Private key B
+    '-h': Display help message
+
+
+##example can be seen below
+./dh_assign_1 -o output.txt -p 23 -g 9 -a 15 -b 2
+./dh_assign_1 -h
+
+
+
+
+# RSA Key Management and Performance Tool
+
+## Code Overview
+
+This C program, `rsa_assign_1`, serves as a versatile tool for RSA key management and performance evaluation, closely aligned with the assignment instructions. The code offers multiple functionalities, including RSA key pair generation, data encryption and decryption, and the performance comparison of RSA operations with different key lengths.
+
+## Assignment Instructions Implementation
+
+The code follows the assignment instructions closely, as outlined below:
+
+1. **Generate RSA Key Pairs (`-g length`)**: The code provides the option to generate RSA key pairs with the specified key length and store them in separate public and private key files. This feature aligns with the `-g length` option mentioned in the assignment instructions.
+
+2. **Data Encryption (`-e`) and Decryption (`-d`)**: The code allows for data encryption and decryption using RSA, utilizing the public and private keys. This corresponds to the `-e` and `-d` options specified in the assignment instructions. It uses modular exponentiation and the GMP library for these operations.
+
+3. **Performance Comparison (`-a`)**: The code performs a performance comparison by generating three sets of public and private key pairs with different key lengths (1024, 2048, 4096 bits) as mentioned in the assignment instructions. It simulates encryption and decryption for a sample message and records the time taken for each operation. The results are saved in a specified performance file, allowing for a direct comparison of the computational time. This aligns with the `-a` option in the assignment instructions.
+
+## GMP Framework and Common Functions
+
+- **GMP Usage**: The code relies on the GMP (GNU Multiple Precision) library for handling large integer arithmetic. GMP is crucial for RSA encryption and decryption, which involve complex mathematical operations with large integers.
+
+- **mpz_inits and mpz_clears**: The code frequently uses `mpz_inits` to initialize multiple GMP integers and `mpz_clears` to clear them when they are no longer needed. This ensures efficient memory management when working with large integers.
+
+- **mpz_urandomb and mpz_nextprime**: These GMP functions are used to generate random prime numbers (`p` and `q`) of the specified length and to ensure that these numbers are prime.
+
+- **mpz_powm**: This GMP function is central to modular exponentiation, both for encryption and decryption in RSA. It computes `message^publicKey % n` for encryption and `cipher^privateKey % n` for decryption.
+
+- **mpz_import**: This GMP function is used to import data from an array of bytes into an mpz_t integer.
+
+- **mpz_export**: This GMP function is used to export data from an mpz_t integer to an array of bytes together with `mpz_import` these functions are used to help encode and decode the plaintext message.
+
+- **mpz_out_str**: This GMP function allows the conversion the mpz_t integer into a character string and write it to a specified output file. In the code it is used to store the ciphertext in the output file
+
+- **mpz_inp_str**:  This GMP function allows the reading from a specified input file and initialization of a character string into an mpz_t integer. In the code it is used to read the ciphertext from the input file
+
+- **mpz_add_ui and gmp_randseed_ui**: `gmp_randseed_ui` seeds a random number generator while `mpz_add_ui` is a function that performs addition operations. These functions are used in the generation of the e prime number to create a random number and to ensure that e is greater than one respectively
+
+
+## RSA Key Struct
+
+- **RSA Key Component Pair Struct**: The code introduces a custom data structure to hold public and private RSA key components. It includes `mpz_t` integers to store the modulus (`n`) and either the public exponent (`e`) or the private exponent (`d`). This struct facilitates the management and usage of RSA keys throughout the code.
+
+## Script Functions
+
+The code features several functions to perform different tasks:
+
+- **generateRSAKeyPair**: This function generates RSA key pairs by calculating random prime numbers `p` and `q`, and then computes `n`, `λ(n)`, and the public and private exponents. The results are stored in the custom RSA key struct.
+
+- **performEncryption**: This function reads the public key components from a public key file and the plaintext message from an input file. It then encrypts the message and stores the ciphertext in an output file.
+
+- **performDecryption**: Similar to encryption, this function reads the private key components from a private key file and the ciphertext from an input file. It decrypts the ciphertext and stores the original message in an output file.
+
+- **generate_prime_e**: This function is used to generate a random e that is also a coprime to lambda
+
+- **encodeStringToMpz**: This function is used in the encoding of the plaintext it turns a string into a byte array with UTF-8 encdoding and then into an mpz_t integer
+
+- **decodeMpzToString**: This function is used in the decoding of the ciphertext it turns an mpz_t integer into a byte array and then into a string with UTF-8 encoding.
+
+- **Main Function**: The main function serves as the entry point of the code. It handles command-line arguments, invokes the relevant functions, and ensures the code operates as per the specified options and requirements.
+
+
+## How To Run
+Options:
+    '-i path': Path to the input file
+    '-o path': Path to the output file
+    '-k path': Path to the key file
+    '-g length': Perform RSA key-pair generation given a key length "length"
+    '-d': Decrypt input and store results to output
+    '-e': Encrypt input and store results to output
+    '-a': Compare the performance of RSA encryption and decryption with three different key lengths (1024, 2048, 4096 key lengths) in terms of computational time
+    '-h': Display help message
+
+To generate keys use the -g option and specify a key length
+example can be seen below
+./rsa_assign_1 -g 1024
+
+To encrypt message use the -e option and specify -i -o -k
+example can be seen below
+./rsa_assign_1 -i plaintext.txt -o ciphertext.txt -k public_1024.key -e
+
+To dencrypt message use the -d option and specify -i -o -k
+example can be seen below
+./rsa_assign_1 -i ciphertext.txt -o decrypted.txt -k private_1024.key -d
+
+To compare performance of rsa encryption based on three key lengths (1024, 2048, 4096) use the -a option and specify a filepath
+example can be seen below
+./rsa_assign_1 -a performance.txt

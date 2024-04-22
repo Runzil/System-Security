@@ -1,0 +1,34 @@
+2019030105 Damianakis Stavros
+2019030035 Zafeirakis Konstantinos
+
+gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.2) 
+
+logger.c: Overwrites the fopen and fwrite functions with custom functions for logging file accesses and writes
+
+-fopen: it overrides the standard fopen function to log file accesses it retrieves the original fopen function using dlsym, checks file existence and permissions, logs the access in a file, and calculates MD5 hash for the files. The access information logged are ID, file path, timestamp, access type, action flag, and MD5 hash
+-fwrite: same as fopen with dslym it retrieves the original functions then checks the permissions and calculates MD5 fingerprints for file content. The logged info are the same as in the fopen
+
+
+
+ac_monitor.c: Reads from the log file the all the entries and tokenizes each data point then for the:
+			  -h option prints a help message
+			  -m option prints all malicious users that have accessed a file more than 7 times by iterating over all log entries while for each user it checks if the count of unauthorized actions is greater than or equal to 7.
+			  -i <filename> option prints a table of all the modifications each user has done to the <filename>. It does this by iterating over all log entries and for the logs with the given filename it saves the uid and checks if the user has accessed the file before and compares the md5 hash values between the 2 entries if they are different the file has been modified
+			  
+			  
+			
+test_aclog: creates 5 files and reads or writes different combinations of them also changes the permissions for some of them
+
+
+How to run:
+
+make clean
+make all
+LD_PRELOAD=./logger.so ./test_aclog
+
+Then any option for the ac_monitor such as:
+
+./ac_monitor -h
+./ac_monitor -m
+./ac_monitor -i <filepath>
+(Be careful, you need to specify the path of the file in the -i option, e.g. /home/user/assign2/file_1.txt)
