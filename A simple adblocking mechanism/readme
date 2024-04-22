@@ -1,6 +1,3 @@
-2019030105 Damianakis Stavros
-2019030035 Zafeirakis Konstantinos
-
 gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.2)
 
 adblock.sh is a script that restricts incoming and outgoing traffic between an ip and the host the ip can be specified either as is or through a domain it also has the ability to save and load these rules in files more specifically the options are:
